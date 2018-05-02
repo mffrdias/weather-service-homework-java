@@ -13,6 +13,7 @@ import com.tieto.weather.message.*;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -95,4 +96,18 @@ public class Controller {
 		return msg;
 	}
 
+	/**
+	 * Using HTTP PUT adds a new city if the city does not exist.
+	 * 
+	 * @param name
+	 *            Name of the city
+	 * @return Returns <code>true</code> if a new record was added successfully;
+	 *         <code>false</code> otherwise
+	 */
+	@RequestMapping(value = "/api/weather/cities", method = RequestMethod.PUT)
+	public Message createNewCity(@RequestParam(name = "name", required = true) String name) {
+		Message msg = new Message();
+		msg.setSuccess(bsLogic.addCity(name));
+		return msg;
+	}
 }
