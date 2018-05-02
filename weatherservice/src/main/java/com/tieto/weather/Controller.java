@@ -1,6 +1,7 @@
 package com.tieto.weather;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -10,6 +11,8 @@ import java.util.Set;
 
 import com.tieto.weather.message.*;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -109,5 +112,39 @@ public class Controller {
 		Message msg = new Message();
 		msg.setSuccess(bsLogic.addCity(name));
 		return msg;
+	}
+	
+	/**
+	 * Adds a new max temperature record to the specified city.
+	 * 
+	 * @param cityParam
+	 *            The name of the city
+	 * @param date
+	 *            The date for which the temperature applies with the following
+	 *            format: yyyy-MM-dd
+	 * @param temp
+	 *            The maximum temperature for that day
+	 * @return Returns the boolean <code>true</code> if able to add the temperature
+	 *         otherwise a HTTP 400
+	 */
+	@RequestMapping(value = "/api/weather/cities/{city}/temperatures", method = RequestMethod.POST)
+	public ResponseEntity<Message> addNewTemperature(@PathVariable("city") String cityParam,
+			@RequestParam(name = "date", required = true) String date,
+			@RequestParam(name = "temperature", required = true) Double temp) {
+
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+		LocalDate inputDate = LocalDate.parse(date, formatter);
+
+		Location city = bsLogic.getCity(cityParam);
+		if (city == null || city.containsTemperature(inputDate)) {
+			ErrorMessage msg = new ErrorMessage();
+			msg.setSuccess(false);
+			msg.setStatus(HttpStatus.BAD_REQUEST.value());
+			msg.setError(cityParam + " does not exist or already contains this temperature!");
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+		}
+
+		city.addTemperature(inputDate, temp);
+		return ResponseEntity.ok(new Message(true));
 	}
 }
